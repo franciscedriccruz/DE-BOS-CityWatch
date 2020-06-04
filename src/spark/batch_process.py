@@ -1,9 +1,11 @@
+# Import PySpark Libraries
 from __future__ import print_function
 from pyspark.sql import *
 from pyspark.sql.types import StringType, IntegerType, MapType, StructType, StructField, DoubleType
 from pyspark.sql.functions import udf, broadcast, col
 from pyspark.sql import functions as F
 
+# Import Additional Libraries
 import geopandas as gpd 
 from shapely.geometry import Point, Polygon, shape
 import shapely.speedups
@@ -20,7 +22,6 @@ POSTGRESQL_PASSWORD = ""
 S3_FILE = ""
 
 # Define Functions and PySpark UDFs 
-
 def defineSchema():
     '''
     Function to define schema to avoid messy row header data
@@ -71,14 +72,14 @@ def categorizeComplaints(complaint_type):
     '''
     Function to categorize many complaints into buckets based on relevance
     INPUT: complaint_type => String
-    OUTPUT: complaint => String
+    OUTPUT: String
     '''
     complaint = complaint_type.lower()
     
     utilities = ["heat/hot water", "heating", "plumbing", "water", "water system", "electricity", "electric"]
     street_condition = ["street condition", "street light condition", "traffic signal condition", "sidewalk condition", "graffiti", "snow", "street sign - damaged", "curb condition", "traffic", "derelict vehicles", "water leak"]
     parking = ["parking - illegal parking", "blocked driveway"]
-    construction = ["paint - plaster", "paint/plaster"]
+    construction = ["paint - plaster", "paint/plaster", "flooring/stairs", "flooring", "stairs", "lead"]
     unsanitary = ["unsanitary condition", "sewer, dirty conditions", "sanitary conditions", "rodent", "air quality"]
     
     if "noise" in complaint:
@@ -100,9 +101,14 @@ def categorizeComplaints(complaint_type):
     elif complaint in unsanitary:
         return "unsanitary conditions"
     else:
-        return "miscellaneous concern"
+        return "others"
 
 def checkBoroughName(borough):
+    '''
+    Function to ensure borough names are consistent
+    INPUT: borough => String
+    OUTPUT: String
+    '''
     borough = borough.lower()
     if "queens" in borough:
         return "queens"
@@ -176,10 +182,10 @@ def findNTA(longitude, latitude):
     INPUT: longitude => Double, latitude => Double
     OUTPUT: NTACode => String
     '''
-
     if longitude is None or latitude is None:
         return "unspecified"
     else:
+        # create a point object and check if the point is in the geometry
         point = Point(longitude, latitude)
 
         # Iterate through each geometry
@@ -191,11 +197,21 @@ def findNTA(longitude, latitude):
         return "unspecified" 
 
 def createKey(year, month, day, NTACode):
+    '''
+    Function creates a unique key using time and ntacode information
+    INPUT: year => String, month => String, day => String, NTACode => String
+    OUTPUT: String
+    '''
     return year + '_' + month + '_' + day + '_' + NTACode
 
 
-def convertMaptoJSON(mapDataType):
-    return json.dumps(mapDataType)
+def convertMaptoJSON(data):
+    '''
+    Function converts data to a json string
+    INPUT: data => MapType()/dictionary
+    OUTPUT: String
+    '''
+    return json.dumps(data)
 
 
 
@@ -213,7 +229,7 @@ if __name__ == "__main__":
     sc._jsc.hadoopConfiguration().set("fs.s3a.access.key", AWS_ACCESS_KEY_ID)
     sc._jsc.hadoopConfiguration().set("fs.s3a.secret.key", AWS_SECRET_ACCESS_KEY)
 
-    # Define Schema for CSV (Raw schema contains weird entities)
+    # Define Schema for CSV to remove weird entities in the raw data
     desired_schema = defineSchema()
     raw_df = spark.read.csv(S3_FILE, header=True, schema=desired_schema)
 
@@ -224,7 +240,8 @@ if __name__ == "__main__":
     categorizeComplaints_udf = udf(categorizeComplaints, StringType())
     checkBoroughName_udf = udf(checkBoroughName, StringType())
     # categorized_df = select_df.withColumn("complaint_type", categorizeComplaints_udf(col("complaint_type")))
-    categorized_df = select_df.withColumn("complaint_type", categorizeComplaints_udf(col("complaint_type"))).withColumn("borough", checkBoroughName_udf(col("borough")))
+    categorized_df = select_df.withColumn("complaint_type", categorizeComplaints_udf(col("complaint_type"))) \
+                    .withColumn("borough", checkBoroughName_udf(col("borough")))
 
     # Determine if the issue was resolved in 7 days and add as a new column
     checkResolvedIn7Days_udf = udf(checkResolvedIn7Days, IntegerType())
@@ -287,20 +304,22 @@ if __name__ == "__main__":
 
     # Map hours to complaints
     map_hour_complaint_df = complaints_json_df.groupby("key", "year", "month", "day", "hour", "ntacode", "borough", "complaints","resolved") \
-    .agg(F.create_map('hour', 'complaints').alias("hourly_complaint_map")) \
-    .select("key", "year", "month", "day", "hour", "ntacode", "borough", "hourly_complaint_map",'resolved')
+        .agg(F.create_map('hour', 'complaints').alias("hourly_complaint_map")) \
+        .select("key", "year", "month", "day", "hour", "ntacode", "borough", "hourly_complaint_map",'resolved')
 
     # Group based on the date and nta code
     group_hour_complaint_df = map_hour_complaint_df.groupby("key","year", "month", "day", "ntacode", "borough") \
-    .agg(F.collect_list('hourly_complaint_map').alias("hourly_complaint"), F.collect_list('resolved').alias('resolved')) \
-    .select("key","year", "month", "day", "ntacode", "borough", combineMap('hourly_complaint').alias("hourly_complaint"), 'resolved')
+        .agg(F.collect_list('hourly_complaint_map').alias("hourly_complaint"), \
+            F.collect_list('resolved').alias('resolved')) \
+        .select("key","year", "month", "day", "ntacode", "borough", combineMap('hourly_complaint').alias("hourly_complaint"), 'resolved')
 
     # Convert the grouped by hour-complaint map to JSON string for each storing
-    daily_complaint_df = group_hour_complaint_df.withColumn('hourly_complaint', convertMaptoJSON_udf(col("hourly_complaint"))).withColumn('resolved', convertMaptoJSON_udf(col("hourly_complaint")))
+    daily_complaint_df = group_hour_complaint_df.withColumn('hourly_complaint', convertMaptoJSON_udf(col("hourly_complaint")))\
+        .withColumn('resolved', convertMaptoJSON_udf(col("hourly_complaint")))
 
     # Print to check functionality
-    print(daily_complaint_df.show())
-    daily_complaint_df.printSchema()
+    # print(daily_complaint_df.show())
+    # daily_complaint_df.printSchema()
 
 
     ##### STORE
