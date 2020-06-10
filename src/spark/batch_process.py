@@ -18,6 +18,7 @@ def findNTA(longitude, latitude):
     OUTPUT: NTACode => String
     '''
     if longitude is None or latitude is None:
+        # If nothing found, return unspecified
         return "USFD"
     else:
         # create a point object and check if the point is in the geometry
@@ -30,7 +31,7 @@ def findNTA(longitude, latitude):
             boundary = row['geometry']
             if point.within(boundary):
                 return row["NTACode"]
-        # If nothing found
+        # If nothing found, return unspecified
         return "USFD" 
 
 
