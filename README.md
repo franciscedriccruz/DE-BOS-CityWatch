@@ -1,7 +1,7 @@
 # CityWatch - Creating Smarter Cities Using the 311
 
 ## Table of Contents
-[Introduction](Introduction)
+[Introduction](##Introduction)
 
 ## Introduction
 With increasing urban growth in large metropolitan areas, maintaining city infrastructure becomes a main concern for local municipal governments. Broken and wearing infrastructure costs everyone time and money. Fortunately, these infrastructure or social concerns are reported through 311 calls. In NYC alone, there have been 22 million 311 calls (from 2010 to June 2020), ranging from different complaint types. 
