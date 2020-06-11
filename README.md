@@ -3,6 +3,13 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Data Set](#dataset)
+- [Data Pipeline](#datapipeline)
+	- [Data Ingestion Layer](#dataingestionlayer)
+	- [Data Computation](#datacomputation)
+	- [Data Storage](#datastorage)
+	- [API Endpoints](#API)
+	- [Data Visualization](#datavisualization)
+- [Instructions](#instructions)
 
 <a name="introduction"></a>
 ## Introduction
@@ -32,7 +39,7 @@ Population data was also used to determine the number of 311 calls per capita. T
 <img src = "images/2_population_2010.png" width="500" class="center">
 </p>
 
-
+<a name="datapipeline"></a>
 ## Data Pipeline
 The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to host the entire data pipeline consisting of a Spark Cluster, PostgreSQL database, Flask API instance, and a Front-end instance. 
 
@@ -40,11 +47,12 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 <img src = "images/3_data_pipeline.png" width="700" class="center">
 </p>
 
-
+<a name="dataingestionlayer"></a>
 ### Data Ingestion Layer (S3, EC2, Airflow)
 - Historical 311 raw data was first preprocessed to extract the columns of interest and was directly uploaded to S3 where it will be accessed during batch processing. 
 - Daily 311 data was retrieved using a daily scheduled workflow through Airflow which retrieves 311 day every midnight and saves the data onto S3. 
 
+<a name="datacomputation"></a>
 ### Data Computation (Spark, Airflow)
 - Spark was used to perform a series of data transformation on both the historical and daily 311 data. These include the following:
 	- Cleaning the data
@@ -60,6 +68,7 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 <img src = "images/4_spark_output.png" width="350" class="center">
 </p>
 
+<a name="datastorage"></a>
 ### Data Storage / Schema (PostgreSQL)
 - After the Spark computation, PostgreSQL was used to store the resulting count. Aggregating the data resulted in faster write speeds by reducing the number of rows in the database. 
 - The schema was designed to use limit CHAR types instead of text/strings where possible. 
@@ -74,6 +83,7 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 | ntacode 	| CHAR(4) | 
 |complaint_map	| TEXT 	  |
 
+<a name="API"></a>
 ### API Endpoints (Flask, PostgreSQL)
 - API endpoints were created using Flask to perform SQL queries on PostgreSQL. 
 - The response for each endpoint depends on the specific API call and is returned as a JSON output. 
@@ -123,10 +133,12 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 }
 ```
 
+<a name="datavisualization"></a>
 ### Data Visualization - DEMO (Plotly, Dash)
 - To demonstrate the functionality of the API on a sample use case, the 311 calls based on type and count are plotted on a bar and choropleth graph to visualize geospatial and temporal geospatial trends. 
 
-### Instructions to Run this Pipeline
+<a name="instructions"></a>
+## Instructions to Run this Pipeline
 - Install python packages: pandas, geopandas, flask, psycopg2-binary
 - Prerequisite files: JDBC PostgreSQL JAR - postgresql-42.2.12.jar 
 - For Historical 311 Batch Processing, run command after moving files to correct directories:  
