@@ -9,7 +9,7 @@
 	- [Data Storage](#datastorage)
 	- [API Endpoints](#API)
 	- [Data Visualization](#datavisualization)
-- [Instructions](#instructions)
+- [Instructions to Run this Pipeline](#instructions)
 
 <a name="introduction"></a>
 ## Introduction
@@ -112,7 +112,6 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 ##### GET /data/complaintCapitaRatio/nta
 - retrieves normalized complaint per capita ratio for the entire city grouped by NTACode
 - INPUT parameters: year
-
 - An example output of GET /data/complaintType/nta is shown below:
 ```
 {
