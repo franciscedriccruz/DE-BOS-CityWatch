@@ -133,7 +133,7 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 ```
 
 <a name="datavisualization"></a>
-### Data Visualization - DEMO (Plotly, Dash)
+### Data Visualization (Plotly, Dash)
 - To demonstrate the functionality of the API on a sample use case, the 311 calls based on type and count are plotted on a bar and choropleth graph to visualize geospatial and temporal geospatial trends. 
 
 <a name="instructions"></a>
