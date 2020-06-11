@@ -56,3 +56,80 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 <img src = "images/4_spark_output.png" width="350" class="center">
 </p>
 
+### Data Storage / Schema (PostgreSQL)
+- After the Spark computation, PostgreSQL was used to store the resulting count. Aggregating the data resulted in faster write speeds by reducing the number of rows in the database. 
+- The schema was designed to use limit CHAR types instead of text/strings where possible. 
+
+311 Table Schema
+| Column  	| Type    | 
+| --------------|:-------:| 
+| key     	| CHAR(18)| 
+| year    	| CHAR(4) | 
+| month   	| CHAR(2) |
+| borough 	| CHAR(2) |
+| ntacode 	| CHAR(4) | 
+|complaint_map	| TEXT 	  |
+
+### API Endpoints (Flask, PostgreSQL)
+- API endpoints were created using Flask to perform SQL queries on PostgreSQL. 
+- The response for each endpoint depends on the specific API call and is returned as a JSON output. 
+- Examples of a few API endpoints are the following: 
+
+##### GET /data/complaintType/borough
+- retrieves complaint type distribution for the entire city grouped by borough based on provided year and month
+- INPUT parameters: year, month
+	
+##### GET /data/complaintType/borough
+- retrieves complaint type distribution for the entire city grouped by borough based on provided year and month
+- INPUT parameters: year, month
+
+##### GET /data/complaintType/nta
+- retrieves complaint type distribution for the entire city grouped by NTACode based on provided year and month
+- INPUT parameters: year, month
+
+##### GET /data/complaintCount/borough
+- retrieves complaint count for the entire city grouped by borough based on provided year and month
+- INPUT parameters: year, month
+
+##### GET /data/complaintCount/nta
+- retrieves complaint count for the entire city grouped by NTACode based on provided year and month
+- INPUT parameters: year, month
+
+##### GET /data/complaintCapitaRatio/nta
+- retrieves normalized complaint per capita ratio for the entire city grouped by NTACode
+- INPUT parameters: year
+
+- An example output of GET /data/complaintType/nta is shown below:
+```
+{
+      "BX01": {
+        "construction services": 1, 
+        "miscellaneous concern": 3, 
+        "street condition": 2, 
+        "unsanitary conditions": 5, 
+        "utilities": 4
+      }, ...,
+      "MN28": {
+        "construction services": 4, 
+        "miscellaneous concern": 6, 
+        "street condition": 1, 
+        "unsanitary conditions": 7, 
+        "utilities": 9
+      }
+}
+```
+
+### Data Visualization - DEMO (Plotly, Dash)
+- To demonstrate the functionality of the API on a sample use case, the 311 calls based on type and count are plotted on a bar and choropleth graph to visualize geospatial and temporal geospatial trends. 
+
+### Instructions to Run this Pipeline
+- Install python packages: pandas, geopandas, flask, psycopg2-binary
+- Prerequisite files: JDBC PostgreSQL JAR - postgresql-42.2.12.jar 
+- For Historical 311 Batch Processing, run command after moving files to correct directories:  
+```spark-submit --packages com.amazonaws:aws-java-sdk:1.7.4,org.apache.hadoop:hadoop-aws:2.7.7 --master spark://<Master Node DNS> --driver-class-path /home/ubuntu/Project/batch/postgresql-42.2.12.jar --jars /home/ubuntu/Project/batch/postgresql-42.2.12.jar batch_process.py --py-files /home/ubuntu/Project/batch/batch_process_functions.py```
+- For Daily 311 Batch Processing using Airflow, run commands after moving files to correct directories: 
+	- Initialize the airflow database: ```airflow initdb```
+	- Start the webserver on master node: ```airflow webserver -p 8081```
+	- Start the scheduler on master node: ```airflow scheduler```
+- For Flask, run command after moving files to correct directories: ```python3 api.py```
+- For Dash front end, run command after moving files to correct directories: ```python3 app_dash.py```
