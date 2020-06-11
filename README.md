@@ -1,14 +1,16 @@
 # CityWatch - Creating Smarter Cities Using the 311
 
 ## Table of Contents
-[Introduction](##Introduction)
-[Data Set](##Data-Set)
+- [Introduction](#introduction)
+- [Data Set](#dataset)
 
+<a name="introduction"></a>
 ## Introduction
 With increasing urban growth in large metropolitan areas, maintaining city infrastructure becomes a main concern for local municipal governments. Broken and wearing infrastructure costs everyone time and money. Fortunately, these infrastructure or social concerns are reported through 311 calls. In NYC alone, there have been 22 million 311 calls (from 2010 to June 2020), ranging from different complaint types. 
 
 The main objective of this project aims to create a database API and platform that provides aggregated 311 data summaries and trends based on spatial and temporal parameters including the specific 311 complaint type. The potential use case would be to allow local government agencies and urban planners a way to quickly see 311 trends based on a common complaint type for a given neighborhood over a period of time. Hence, these stakeholders can use this information to properly allocate municipal resources in real-time. 
 
+<a name="dataset"></a>
 ## Data Set
 The data used for this project was retrieved from NYC Open Data. Historical 311 calls from 2010 to June 2020 were retrieved as a 13 GB CSV file from the NYC Open Data website. Daily new 311 calls were retrieved using Socrata API and were stored directly into S3. 
 
