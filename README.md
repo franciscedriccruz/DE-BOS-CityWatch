@@ -12,22 +12,30 @@ The data used for this project was retrieved from NYC Open Data. Historical 311 
 
 A summarized view of the raw 311 data is shown below. 
 
-<image1 - Raw Data 311>
+<p align="center">
+<img src = "images/0_raw_data_311.PNG" width="350" class="center">
+</p>
 
 In addition to the 311 Data set, the coordinates for each 311 data call is mapped to a specific neighborhood using NTA geometries. An NTA geometry represents a neighborhood in NYC indicating the neighborhood's code, name, and geometric shape. An example view of NYC split into NTA geometries are shown below. 
 
-<image2 - NTA geometry> 
+<p align="center">
+<img src = "images/1_NTA_NYC.PNG" width="350" class="center">
+</p>
 
 Population data was also used to determine the number of 311 calls per capita. This was retrieved from census data. Using a forecasted growth rate for each borough, population from 2010 onwards was estimated for 2011-2020.  
 
-<image3 - Population> 
-
+<p align="center">
+<img src = "images/2_population_2010.PNG" width="350" class="center">
+</p>
 
 
 ## Data Pipeline
 The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to host the entire data pipeline consisting of a Spark Cluster, PostgreSQL database, Flask API instance, and a Front-end instance. 
 
-<image4 - Pipeline> 
+<p align="center">
+<img src = "images/3_data_pipeline.PNG" width="350" class="center">
+</p>
+
 
 ### Data Ingestion Layer (S3, EC2, Airflow)
 - Historical 311 raw data was first preprocessed to extract the columns of interest and was directly uploaded to S3 where it will be accessed during batch processing. 
@@ -44,5 +52,7 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 		- Aggregated based on date, NTA Code, and then created a complaint map representing a dictionary containing the specific complaint type and its respective count. 
 - A sample output of the spark computation is shown in the image below. 
 
-<image5 - Spark Output>
+<p align="center">
+<img src = "images/4_spark_output.PNG" width="350" class="center">
+</p>
 
