@@ -13,19 +13,19 @@ The data used for this project was retrieved from NYC Open Data. Historical 311 
 A summarized view of the raw 311 data is shown below. 
 
 <p align="center">
-<img src = "images/0_raw_data_311.PNG" width="350" class="center">
+<img src = "images/0_raw_data_311.png" width="500" class="center">
 </p>
 
 In addition to the 311 Data set, the coordinates for each 311 data call is mapped to a specific neighborhood using NTA geometries. An NTA geometry represents a neighborhood in NYC indicating the neighborhood's code, name, and geometric shape. An example view of NYC split into NTA geometries are shown below. 
 
 <p align="center">
-<img src = "images/1_NTA_NYC.PNG" width="350" class="center">
+<img src = "images/1_NTA_NYC.png" width="350" class="center">
 </p>
 
 Population data was also used to determine the number of 311 calls per capita. This was retrieved from census data. Using a forecasted growth rate for each borough, population from 2010 onwards was estimated for 2011-2020.  
 
 <p align="center">
-<img src = "images/2_population_2010.PNG" width="350" class="center">
+<img src = "images/2_population_2010.png" width="500" class="center">
 </p>
 
 
@@ -33,7 +33,7 @@ Population data was also used to determine the number of 311 calls per capita. T
 The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to host the entire data pipeline consisting of a Spark Cluster, PostgreSQL database, Flask API instance, and a Front-end instance. 
 
 <p align="center">
-<img src = "images/3_data_pipeline.PNG" width="350" class="center">
+<img src = "images/3_data_pipeline.png" width="700" class="center">
 </p>
 
 
@@ -53,6 +53,6 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 - A sample output of the spark computation is shown in the image below. 
 
 <p align="center">
-<img src = "images/4_spark_output.PNG" width="350" class="center">
+<img src = "images/4_spark_output.png" width="350" class="center">
 </p>
 
