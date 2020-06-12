@@ -44,7 +44,7 @@ Population data was also used to determine the number of 311 calls per capita. T
 The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to host the entire data pipeline consisting of a Spark Cluster, PostgreSQL database, Flask API instance, and a Front-end instance. 
 
 <p align="center">
-<img src = "images/3_data_pipeline.png" width="700" class="center">
+<img src = "images/3_data_pipeline.png" width="900" class="center">
 </p>
 
 <a name="dataingestionlayer"></a>
@@ -90,27 +90,23 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 - Examples of a few API endpoints are the following: 
 
 ##### GET /data/complaintType/borough
-- retrieves complaint type distribution for the entire city grouped by borough based on provided year and month
-- INPUT parameters: year, month
-	
-##### GET /data/complaintType/borough
-- retrieves complaint type distribution for the entire city grouped by borough based on provided year and month
+- Retrieves complaint type distribution for the entire city grouped by borough based on provided year and month
 - INPUT parameters: year, month
 
 ##### GET /data/complaintType/nta
-- retrieves complaint type distribution for the entire city grouped by NTACode based on provided year and month
+- Retrieves complaint type distribution for the entire city grouped by NTACode based on provided year and month
 - INPUT parameters: year, month
 
 ##### GET /data/complaintCount/borough
-- retrieves complaint count for the entire city grouped by borough based on provided year and month
+- Retrieves complaint count for the entire city grouped by borough based on provided year and month
 - INPUT parameters: year, month
 
 ##### GET /data/complaintCount/nta
-- retrieves complaint count for the entire city grouped by NTACode based on provided year and month
+- Retrieves complaint count for the entire city grouped by NTACode based on provided year and month
 - INPUT parameters: year, month
 
 ##### GET /data/complaintCapitaRatio/nta
-- retrieves normalized complaint per capita ratio for the entire city grouped by NTACode
+- Retrieves normalized complaint per capita ratio for the entire city grouped by NTACode
 - INPUT parameters: year
 - An example output of GET /data/complaintType/nta is shown below:
 ```
