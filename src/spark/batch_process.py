@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Perform data cleaning, mapping 311 calls to NTA codes, and perform aggregated computation based on
+created_date, NTA Code, and borough. The results of the computation are stored into PostgreSQL.  
+'''
+
 # Import library containing all needed libraries and user defined functions
 from batch_process_functions import *
 
@@ -34,7 +39,6 @@ def findNTA(longitude, latitude):
         # If nothing found, return unspecified
         return "USFD" 
 
-
 if __name__ == "__main__":
 
     # Define Spark Session and Spark Context
@@ -43,6 +47,8 @@ if __name__ == "__main__":
             .appName("BatchTest")\
             .enableHiveSupport()\
             .getOrCreate()
+    # Define Shuffle Partition Size - Can be changed to accommodate for larger data sets
+    spark.conf.set("spark.sql.shuffle.partitions", 100)
     sc = spark.sparkContext
     sc.setLogLevel("ERROR")
     sc.addPyFile('batch_process_functions.py')
@@ -50,14 +56,14 @@ if __name__ == "__main__":
     sc._jsc.hadoopConfiguration().set("fs.s3a.access.key", AWS_ACCESS_KEY_ID)
     sc._jsc.hadoopConfiguration().set("fs.s3a.secret.key", AWS_SECRET_ACCESS_KEY)
 
-    # Define Schema for CSV to remove weird entities in the raw data
+    # Define Schema for CSV to remove unicode entities in the raw data
     desired_schema = defineSchemaHistoric()
     raw_df = spark.read.csv(S3_FILE, header=True, schema=desired_schema)
 
     # Select columns of interest
-    select_df = raw_df.select("created_date", "complaint_type", "resolved", "borough", "latitude", "longitude")
+    select_df = raw_df.select("created_date", "complaint_type", "borough", "latitude", "longitude")
 
-    # Categorize ComplaintType into complaint buckets and overwrite the existing ComplaintType column and check borough names
+    # Categorize complaint_type into buckets and overwrite the existing complaint_type column and check borough names
     categorized_df = select_df.withColumn("complaint_type", categorizeComplaints_udf(col("complaint_type"))) \
                     .withColumn("borough", checkBoroughName_udf(col("borough")))
 
@@ -80,9 +86,8 @@ if __name__ == "__main__":
         .agg(F.count("complaint_type").alias("complaint_count")) \
         .select("created_date", "borough", "ntacode", "complaint_type", "complaint_count")
 
-    # Create a map between the complaint type and its respective count and resolved count
-    map_complaint_count_df = complaint_count_df.groupby("created_date", "borough", "ntacode", "complaint_type", "complaint_count") \
-        .agg(F.create_map("complaint_type", "complaint_count").alias("complaint_map"))  \
+    # Create a map between the cmplaint type and its respective count
+    map_complaint_count_df = complaint_count_df.withColumn("complaint_map", F.create_map("complaint_type", "complaint_count"))\
         .select("created_date", "borough", "ntacode", "complaint_map")
 
     # Define UDF to combine array of maps into single map in pyspark dataframe
@@ -120,6 +125,5 @@ if __name__ == "__main__":
         .mode("append") \
         .save()
 
-   
     print("End of Script")
     spark.stop()

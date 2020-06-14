@@ -1,3 +1,7 @@
+'''
+CODE DESCRIPTION: Contains functions and UDFs that are used in batch_process.py
+'''
+
 # Import PySpark Libraries
 from __future__ import print_function
 from pyspark.sql import *
@@ -61,7 +65,6 @@ def defineSchemaHistoric():
         StructField('longitude', StringType(),True), 
         StructField('location', StringType(),True)])
     return schema
-
 
 def defineSchemaDaily():
     '''
@@ -205,7 +208,7 @@ def extractDateParams(date):
 def convertMaptoJSON(data):
     '''
     Function converts data to a json string
-    INPUT: data => MapType()/dictionary
+    INPUT: data => MapType() or Dictionary
     OUTPUT: String
     '''
     return json.dumps(data)
