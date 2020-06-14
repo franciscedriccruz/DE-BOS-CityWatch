@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Extract relevant columns from the NYC NTA geojson data to increase read speeds
+Neighborhood Tabulation data were retrieved from: https://www1.nyc.gov/site/planning/data-maps/open-data/dwn-nynta.page
+'''
+
 # Import libraries
 import geopandas as gpd 
 

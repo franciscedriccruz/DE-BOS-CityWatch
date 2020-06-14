@@ -1,3 +1,9 @@
+'''
+CODE DESCRIPTION: Extract relevant columns from the NYC Population data and forecasted
+population growth from 2011 to 2020 using estimated borough growth rates. 
+Growth rates were extracted from: https://www1.nyc.gov/site/planning/planning-level/nyc-population/current-future-populations.page
+'''
+
 # Import libraries
 import pandas as pd  
 import numpy as np 
@@ -11,7 +17,7 @@ population_data = population_data.rename(columns={"Population": "Population - 20
 population_data = population_data.drop(['Year'], axis = 1)
 
 # Add annual growth rate to the table
-# Growth rates were sourced on: 
+# Growth rates: 
 growth = {'Bronx': 0.045, 'Brooklyn': 0.037, 'Manhattan': 0.033, 'Queens': 0.036, 'Staten Island': 0.039}
 population_data['Growth Factor'] = population_data['Borough'].map(growth)
 
