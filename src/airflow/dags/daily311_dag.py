@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Airflow DAG which retrieves new daily 311 calls, saves them to S3 and runs a spark job 
+to perform batch processing daily.   
+'''
+
 # Import Airflow dependencies and libraries
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
