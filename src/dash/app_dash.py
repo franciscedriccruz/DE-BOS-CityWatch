@@ -1,40 +1,30 @@
+'''
+CODE DESCRIPTION: Front-end that visualizes the data by querying the database and plotting them into bar and 
+choropleth graphs. 
+'''
+
 # Import libraries
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+
 import pandas as pd
 import json
 import requests
 import geopandas as gpd 
 import plotly.express as px
 
-# Define global variables
 # AWS PRIVATE FLASK IP
 ENDPOINT_IP = ""
 
 # Define website entities
-empty_graph =  {
-                    "layout": {
-                        "xaxis": {
-                            "visible": False
-                        },
-                        "yaxis": {
-                            "visible": False
-                        },
-                        "annotations": [
-                            {
-                                "text": "No matching data found",
+empty_graph =  {"layout": {"xaxis": {"visible": False}, "yaxis": {"visible": False},
+                "annotations": [{"text": "No matching data found",
                                 "xref": "paper",
                                 "yref": "paper",
                                 "showarrow": False,
-                                "font": {
-                                    "size": 28
-                                }
-                            }
-                        ]
-                    }
-                }
+                                "font": {"size": 28}}]}}
 
 year_dropdown = [{'label': '2010', 'value': '2010'},
                 {'label': '2011', 'value': '2011'},
@@ -76,11 +66,31 @@ complaints_dropdown = [
             {'label': 'Safety / Emergency', 'value': 'safety emergency'},
             {'label': 'Others', 'value': 'others'}]
 
-# Load geojson and population files 
+# Load geojson and population files for plotting choropleth map
 nta_code_geometry = gpd.read_file('nta_processed.geojson')
 nta_geojson = json.loads(nta_code_geometry.to_json())
 nta_population = pd.read_csv('population_processed.csv')
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+def constructAPICall(year, month, API_endpoint):
+    '''
+    Function to construct the query to reach the API endpoint
+    INPUT: year => String, month => String, API_endpoint => String
+    OUTPUT: endpoint => String
+    '''
+    if year == "All":
+        year_parameter = ""
+    else:
+        year_parameter = "year=" + str(year) + '&'
+
+    if month == "All":
+        month_parameter = ""
+    else:
+        month_parameter = "month=" + str(month) + '&'
+
+    endpoint = API_endpoint + year_parameter + month_parameter
+    endpoint = endpoint[:-1]
+    return endpoint
 
 def displayBoroughDataBar(json_result):
     '''
@@ -165,78 +175,67 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 # Define layout
 app.layout = html.Div(children=[
 
-    # Header 
-   html.H1(children='CityWatch Demo'),
+    # Header and Tagline
+    html.H1(children='CityWatch: Creating Smarter Cities Using the 311'),
+    html.H3('311 Calls based on Borough and Type Distribution'),
+    html.H4('''The graph below displays the 311 Calls Based on Borough and its Type Distribution. 
+        Use the options to filter for a specific year and month.'''),
 
-    # Tagline
-   html.Div(children='''Creating Smarter Cities Using the 311'''),
-
-    # Dropdown to indicate year for the bar graphs 
-    html.Label('Year'),
+    # Dropdown to indicate Year and Month for the bar graphs 
+    html.H5('Year'),
     dcc.Dropdown(
         id='year-bar',
         options=year_dropdown,
-        value='2010'
-    ),
-    
-    # Dropdown to indicate month for the bar graphs
-    html.Label('Month'),
+        value='2010'), 
+
+    html.H5('Month'),
     dcc.Dropdown(
         id='month-bar',
         options=month_dropdown,
-        value='All'
-    ),
+        value='All'), 
 
     dcc.Graph(id='borough-graph'),
-
     dcc.Graph(id='total-graph'), 
 
-    html.H1(children='''Geospatial Count'''),
-    html.Div(children='''See 311 Calls Based on Area Code and Neighborhoods'''),
+    html.H3('Geospatial Count'),
+    html.H4('''The graph below displays the spatial distribution of 311 calls in New York City. 
+        Use the options below to filter for a specific year, month and 311 call type 
+        to see geospatial 311 trends across neighborhoods.'''),
 
-    html.Label('Year'),
+    html.H5('311 Call Type'),
+    dcc.RadioItems(
+        id='graph-type',
+        options=[
+            {'label': 'Geospatial Count', 'value': 'count'},
+            {'label': '311 Calls per Capita', 'value': 'capita'}],
+        value='count',
+        labelStyle={'display': 'inline-block'}), 
+
+    html.H5('Year'),
     dcc.Dropdown(
         id='year-spatial',
         options=year_dropdown,
-        value='2010'
-    ),
-    
-    html.Label('Month'),
+        value='2010'), 
+
+    html.H5('Month'),
     dcc.Dropdown(
         id='month-spatial',
         options=month_dropdown,
-        value='All'
-    ),
+        value='All'), 
 
-    html.Label('Complaint Type'),
-    dcc.Dropdown(
-        id='complaint-spatial',
-        options=complaints_dropdown,
-        value='Total'
-    ),
-    
-    dcc.Graph(id='geospatial-graph'), 
+    html.H5('Complaint Type', id='complaint-label', style= {'display': 'block'}),
+    html.Div([
+        # Create html.Div for complaint type dropdown element to visible based on selected radio element
+        dcc.Dropdown(
+            id = 'complaint-spatial',
+            options=complaints_dropdown,
+            value = 'Total')],
+        style= {'display': 'block'}),
 
-
-    html.H1(children='''Normalized 311 Calls per Capita'''), 
-    html.Div(children='''Find out where most 311 calls happen based on population'''), 
-
-    html.Label('Year'),
-    dcc.Dropdown(
-        id='year-capita',
-        options=year_dropdown,
-        value='2010'
-    ),
-    
-    html.Label('Month'),
-    dcc.Dropdown(
-        id='month-capita',
-        options=month_dropdown,
-        value='All'
-    ),
-
-    dcc.Graph(id='geospatial-capita-graph'), 
-
+    dcc.Loading(
+            id="loading-geospatial",
+            type="default",
+            children=html.Div(id="geospatial-graph"))
 ])
 
 # Declare callback for the bar graphs
@@ -244,8 +243,7 @@ app.layout = html.Div(children=[
     [Output(component_id='borough-graph', component_property='figure'),
      Output(component_id='total-graph', component_property='figure')],
     [Input(component_id='year-bar', component_property='value'), 
-     Input(component_id='month-bar', component_property='value')]
-)
+     Input(component_id='month-bar', component_property='value')])
 def updateBarGraphs(year, month):
     '''
     Callback to update the bar graphs based on year and month dropdown inputs
@@ -254,132 +252,99 @@ def updateBarGraphs(year, month):
     '''
 
     # Call API query based on inputs
-    borough_query = ENDPOINT_IP + "/data/complaintType/borough?"
-    if year == "All":
-        year_parameter = ""
-    else:
-        year_parameter = "year=" + str(year) + '&'
-
-    if month == "All":
-        month_parameter = ""
-    else:
-        month_parameter = "month=" + str(month) + '&'
-
-    full_borough_query = borough_query + year_parameter + month_parameter
-    full_borough_query = full_borough_query[:-1]
-    resp_borough = requests.get(full_borough_query)
+    borough_endpoint = ENDPOINT_IP + "/data/complaintType/borough?"
+    borough_query = constructAPICall(year, month, borough_endpoint)
+    resp_borough = requests.get(borough_query)
     json_borough_data = json.loads(resp_borough.text)
 
     # Create JSON object where the data contains a JSON containing the x,y data
     figure_borough_data = {
-                        'data': displayBoroughDataBar(json_borough_data),
-                        'layout': {'title': '311 Data by Borough'},  
-        }
+            'data': displayBoroughDataBar(json_borough_data),
+            'layout': {'title': '311 Data by Borough'}
+    }
 
-    total_query = ENDPOINT_IP + "/data/complaintType/all?"
-    full_total_query = total_query + year_parameter + month_parameter
-    full_total_query = full_total_query[:-1]
-    resp_total = requests.get(full_total_query)
+    total_endpoint = ENDPOINT_IP + "/data/complaintType/all?"
+    total_query = constructAPICall(year, month, total_endpoint)
+    resp_total = requests.get(total_query)
     json_total_data = json.loads(resp_total.text)
 
     # Create JSON object where the data contains a JSON containing the x,y data
     figure_total_data = {
             'data': displayComplaintTypeBar(json_total_data),
-            'layout': {'title': 'Total City Complaint Distribution', 'showlegend': False}
-        }
+            'layout': {'title': 'Total City 311 Type Distribution', 'showlegend': False}
+    }
 
-    # If there are no available data, then displa empty graph template
+    # If there are no available data, then display empty graph template
     if not figure_borough_data['data']:
         figure_borough_data = empty_graph
         figure_total_data = empty_graph
-
     return figure_borough_data, figure_total_data
 
+# Declare callback for the choropleth graphs
 @app.callback(
-    Output(component_id='geospatial-graph', component_property='figure'),
-    [Input(component_id='year-spatial', component_property='value'), 
+    [Output(component_id='geospatial-graph', component_property='children'), 
+     Output(component_id='complaint-spatial', component_property='style'), 
+     Output(component_id='complaint-label', component_property='style')],
+    [Input(component_id='graph-type', component_property='value'), 
+     Input(component_id='year-spatial', component_property='value'), 
      Input(component_id='month-spatial', component_property='value'),
-     Input(component_id='complaint-spatial', component_property='value')]
-)
-def updateChoroplethGraph(year, month, complaint_type):
+     Input(component_id='complaint-spatial', component_property='value')])
+
+def updateChoroplethGraph(graph_type, year, month, complaint_type):
     '''
-    Callback to update the choropleth graph based on year, month, and complaint type dropdown inputs
-    INPUT: year => value (String), month => value (String)
-    OUTPUT: figure_borough_data => JSON, figure_total_data => JSON
-    '''
+    Callback to update the choropleth graphs depending on the graph type selected. 
+    If Geospatial Count is selected, then the geospatial choropleth graph will be shown based on
+    the year, month, and complaint type filters selected. 
 
-    # Call API query based on inputs
-    nta_agg_query = ENDPOINT_IP + "/data/complaintType/nta?"
-    if year == "All":
-        year_parameter = ""
-    else:
-        year_parameter = "year=" + str(year) + '&'
+    If 311 Calls per Capita is selected, then the geospatial count per capita choropleth graph will 
+    be shown based on the year and month filters selected. The complaint type filter will be hidden in the UI. 
 
-    if month == "All":
-        month_parameter = ""
-    else:
-        month_parameter = "month=" + str(month) + '&'
-
-    full_nta_agg_query = nta_agg_query + year_parameter + month_parameter
-    full_nta_agg_query = full_nta_agg_query[:-1]
-    resp_nta_agg = requests.get(full_nta_agg_query)
-    json_nta_agg_data = json.loads(resp_nta_agg.text)
-
-    # Update graph based on specified year, month, complaintType filter
-    df = createComplaintTypeDF(json_nta_agg_data)
-    if complaint_type in df.columns:
-        fig = px.choropleth_mapbox(df, geojson=nta_geojson, color=complaint_type,
-                                       locations="NTACode", featureidkey="properties.NTACode",
-                                       center={"lat": 40.7128, "lon": -74.0060},
-                                       mapbox_style="carto-positron", zoom=9, 
-                                       hover_data=["NTACode", "NTA Name", "Borough"])
-
-        fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, title="Geospatial Graph")
-    else:
-        # If no data available, then display empty graph
-        fig = empty_graph
-    return fig
-
-
-@app.callback(
-    Output(component_id='geospatial-capita-graph', component_property='figure'),
-    [Input(component_id='year-capita', component_property='value'), 
-     Input(component_id='month-capita', component_property='value')]
-)
-def updateChoroplethGraphPerCapita(year, month):
-    '''
-    Callback to update the choropleth graph based on year, month, and complaint type dropdown inputs
-    INPUT: year => value (String), month => value (String)
-    OUTPUT: figure_borough_data => JSON, figure_total_data => JSON
+    INPUT: graph_type => String, year => String, month => String, complaint_type => String
+    OUPUT: geospatial-graph => dcc.Graph, complaint-spatial => html display option, complaint-label => html display option
     '''
 
-    # Call API query based on inputs
-    nta_capita_query = ENDPOINT_IP + "/data/complaintCapitaRatio/nta?"
-    if year == "All":
-        year_parameter = ""
+    # If Geospatial Count is selected
+    if graph_type == 'count':
+        nta_agg_endpoint = ENDPOINT_IP + "/data/complaintType/nta?"
+        nta_agg_query = constructAPICall(year, month, nta_agg_endpoint)
+        resp_nta_agg = requests.get(nta_agg_query)
+        json_nta_agg_data = json.loads(resp_nta_agg.text)
+
+        # Construct dataframe to be used for graphing the choropleth map
+        df = createComplaintTypeDF(json_nta_agg_data)
+
+        # Define the variable to be plotted on the map and define visibility of the complaint type dropdown
+        plot_variable = complaint_type
+        complaint_dropdown_style = {'display': 'block'}
+
+        # If the complaint type entered on the UI is not available, return an empty graph
+        if complaint_type not in df.columns:
+            return dcc.Graph(id='geospatial-graph-output', figure=empty_graph), complaint_dropdown_style, complaint_dropdown_style
+    
+    # If 311 Calls per Capita is selected   
     else:
-        year_parameter = "year=" + str(year) + '&'
+        nta_capita_endpoint = ENDPOINT_IP + "/data/complaintCapitaRatio/nta?"
+        nta_capita_query = constructAPICall(year, month, nta_capita_endpoint)
+        resp_nta_capita = requests.get(nta_capita_query)
+        json_nta_capita_data = json.loads(resp_nta_capita.text)
 
-    if month == "All":
-        month_parameter = ""
-    else:
-        month_parameter = "month=" + str(month) + '&'
+        # Construct dataframe to be used for graphing the choropleth map
+        df = createComplaintCapitaDF(json_nta_capita_data)
 
-    full_nta_capita_query = nta_capita_query + year_parameter + month_parameter
-    full_nta_capita_query = full_nta_capita_query[:-1]
-    resp_nta_capita = requests.get(full_nta_capita_query)
-    json_nta_capita_data = json.loads(resp_nta_capita.text)
+        # Define plotting variable to be the ratio and change visibility of the complaint type dropdown
+        plot_variable = "Ratio"
+        complaint_dropdown_style = {'display': 'none'}
 
-    # Update graph
-    df = createComplaintCapitaDF(json_nta_capita_data)
-    fig = px.choropleth_mapbox(df, geojson=nta_geojson, color="Ratio",
-                                           locations="NTACode", featureidkey="properties.NTACode",
-                                           center={"lat": 40.7128, "lon": -74.0060},
-                                           mapbox_style="carto-positron", zoom=9, 
-                                           hover_data=["NTACode", "NTA Name", "Borough"])
-
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, title="Capita Graph")
-    return fig
+    # Create the choropleth map
+    fig = px.choropleth_mapbox(df, geojson=nta_geojson, color=plot_variable,
+            locations="NTACode", featureidkey="properties.NTACode",
+            center={"lat": 40.7128, "lon": -74.0060},
+            mapbox_style="carto-positron", zoom=9, 
+            hover_data=["NTACode", "NTA Name", "Borough"])
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, title="Geospatial graph")
+    geospatial_graph = dcc.Graph(id='geospatial-graph-output', figure=fig)
+    
+    return geospatial_graph, complaint_dropdown_style, complaint_dropdown_style
 
 
 if __name__ == '__main__':
