@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Defines all the functions used for the API endpoints in api.py 
+'''
+
+# Import libraries
 import psycopg2
 import json
 import flask
@@ -8,6 +13,21 @@ import pandas as pd
 full_nta_codes = list(pd.read_csv('population_processed.csv')['NTACode'])
 
 # Define helper functions for API calls
+def constructQuery(database_table, year, month):
+    '''
+    Function to construct queries to the database
+    INPUT: database_table => String, year => String, month => String
+    OUTPUT: query => String
+    '''
+    query = "SELECT * FROM " + database_table + " WHERE "
+    if year:
+        query += "year='" + year + "' AND " 
+    if month:
+        query += "month='" + month + "' AND " 
+
+    query = query[:-5]
+    return query
+    
 def unpackComplaints(complaints):
     '''
     Function to unpack nested json string from database
@@ -20,7 +40,7 @@ def unpackComplaints(complaints):
 def padNTACode(complaints_dict, padded_value={}):
     '''
     Function that adds missing nta codes to complaints_dict to help in plotting
-    INPUT: complaints_dict => Dictionary
+    INPUT: complaints_dict => Dictionary, padded_value => {} or user-input value
     OUTPUT: complaints_dict => Dictionary
     '''
     for nta_code in full_nta_codes:
@@ -139,17 +159,15 @@ def sumBoroughComplaintsCount(query_result):
 
     return agg_borough_complaints_dict    
 
-def complaintsPerCapitaNTA(query_result_NTA, query_result_population, year):
+def complaintsPerCapitaNTA(query_result_NTA, query_result_population):
     '''
     Function to return normalized complaints per capita for each NTA code based on the max ratio.
     This can be used to visualize areas that receive the most complaints for the smallest population. 
-    INPUT: query_result_NTA => List of tuples, query_result_population => List of tuples, year => string
+    INPUT: query_result_NTA => List of tuples, query_result_population => List of tuples
     OUTPUT: complaints_pop_ratio_NTA => Dictionary 
     OUTPUT SAMPLE: {BX01: 0.4, BX02: 0.2}
     '''
     complaints_pop_ratio_NTA = {}
-    year = int(year)
-
     NTA_count_dict = sumNTAComplaintsCount(query_result_NTA)
     for row in query_result_population:
         nta_code = row[0]

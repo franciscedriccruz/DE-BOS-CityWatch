@@ -1,3 +1,7 @@
+'''
+CODE DESCRIPTION: Defines all the database API endpoints to query the database. 
+'''
+
 # Import libraries 
 import psycopg2
 import json
@@ -8,17 +12,20 @@ import pandas as pd
 # Import helper python file
 from api_helper import *
 
+# Define PostgreSQL information
 POSTGRESQL_DB = ""
 POSTGRESQL_USER = ""
 POSTGRESQL_PASSWORD = ""
 POSTGRESQL_HOST = ""
 POSTGRESQL_PORT = ""
+POSTGRESQL_311_TABLE = ""
+POSTGRESQL_POPULATION_TABLE = ""
 
 # Start flask app
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
-# Define HOME PAGE (SANITY CHECK)
+# Define API home page
 @app.route('/', methods=['GET'])
 def home():
     return "<h1>Home Page Test for API Calls.</p>"
@@ -28,7 +35,7 @@ def getAllComplaints():
     '''
     API CALL to retrieve complaint type distribution for the entire city or borough (if specified) for a period of time
     HELPER: sumComplaints()
-    CALL SAMPLE: /data/complaintType/all?year=2014&month=6&borough='BX'
+    CALL SAMPLE: /data/complaintType/all?year=2014&month=6
     OUTPUT: JSON
     OUTPUT SAMPLE: {
         "construction services": 5, 
@@ -37,18 +44,7 @@ def getAllComplaints():
     query_parameters = request.args 
     year = query_parameters.get('year')
     month = query_parameters.get('month')
-    borough = query_parameters.get('borough')
-
-    query = "SELECT * FROM borough_data WHERE "
-    if year:
-        query += "year='" + year + "' AND " 
-    if month:
-        query += "month='" + month + "' AND " 
-    if borough:
-        query += "borough='" + borough + "' AND "  
-
-    query = query[:-5]
-    # query = query + " LIMIT 100" 
+    query = constructQuery(POSTGRESQL_311_TABLE, year, month)
     cur.execute(query)
     rows = cur.fetchall()
     results = sumComplaints(rows)
@@ -71,15 +67,7 @@ def getBoroughComplaints():
     query_parameters = request.args
     year = query_parameters.get('year')
     month = query_parameters.get('month')
-
-    query = "SELECT * FROM borough_data WHERE "
-    if year:
-        query += "year='" + year + "' AND " 
-    if month:
-        query += "month='" + month + "' AND " 
-
-    query = query[:-5]
-    # query = query + " LIMIT 100"
+    query = constructQuery(POSTGRESQL_311_TABLE, year, month)
     cur.execute(query)
     rows = cur.fetchall()
     results = sumBoroughComplaints(rows)
@@ -96,24 +84,13 @@ def getNTAComplaints():
     OUTPUT SAMPLE: {
       "BX01": {
         "construction services": 1, 
-        "miscellaneous concern": 3, 
-        "street condition": 2, 
-        "unsanitary conditions": 5, 
-        "utilities": 4
+        "miscellaneous concern": 3, ...
       }
     '''
     query_parameters = request.args
     year = query_parameters.get('year')
     month = query_parameters.get('month')
-
-    query = "SELECT * FROM borough_data WHERE "
-    if year:
-        query += "year='" + year + "' AND " 
-    if month:
-        query += "month='" + month + "' AND " 
-
-    query = query[:-5]
-    # query = query + " LIMIT 100"
+    query = constructQuery(POSTGRESQL_311_TABLE, year, month)
     cur.execute(query)
     rows = cur.fetchall()
     results = sumNTAComplaints(rows)
@@ -135,15 +112,7 @@ def getBoroughComplaintsCount():
     query_parameters = request.args
     year = query_parameters.get('year')
     month = query_parameters.get('month')
-
-    query = "SELECT * FROM borough_data WHERE "
-    if year:
-        query += "year='" + year + "' AND " 
-    if month:
-        query += "month='" + month + "' AND " 
-
-    query = query[:-5]
-    # query = query + " LIMIT 100"
+    query = constructQuery(POSTGRESQL_311_TABLE, year, month)
     cur.execute(query)
     rows = cur.fetchall()
     results = sumBoroughComplaintsCount(rows)
@@ -164,15 +133,7 @@ def getNTAComplaintsCount():
     query_parameters = request.args
     year = query_parameters.get('year')
     month = query_parameters.get('month')
-
-    query = "SELECT * FROM borough_data WHERE "
-    if year:
-        query += "year='" + year + "' AND " 
-    if month:
-        query += "month='" + month + "' AND " 
-
-    query = query[:-5]
-    # query = query + " LIMIT 100"
+    query = constructQuery(POSTGRESQL_311_TABLE, year, month)
     cur.execute(query)
     rows = cur.fetchall()
     results = sumNTAComplaintsCount(rows)
@@ -191,36 +152,17 @@ def getNTAComplaintsCapitaRatio():
     }
     '''
     query_parameters = request.args
-
     year = query_parameters.get('year')
-
-    query_nta = "SELECT * FROM borough_data WHERE "
-
-    if year is None:
-        abort(404, description="No year specified")
-    else:
-        query_nta += "year='" + year + "'"
-        query_population = "SELECT ntacode, population" + year + " FROM population_data"
-
-    # query_nta = query_nta + ' LIMIT 100'
-    query_population = query_population
+    query_nta = "SELECT * FROM " + POSTGRESQL_311_TABLE + " WHERE year='" + year + "'"
+    query_population = "SELECT ntacode, population" + year + " FROM " + POSTGRESQL_POPULATION_TABLE
     cur.execute(query_nta)
     rows_nta = cur.fetchall()
     cur.execute(query_population)
     rows_population = cur.fetchall()
-    results = complaintsPerCapitaNTA(rows_nta, rows_population, year)
+    results = complaintsPerCapitaNTA(rows_nta, rows_population)
     return jsonify(results)
 
-
-@app.errorhandler(404)
-def resource_not_found(e):
-    return jsonify(error=str(e)), 404
-
-
 if __name__ == "__main__":
-    # Load nta_codes used for some helper functions and API calls
-    full_nta_codes = list(pd.read_csv('population_processed.csv')['NTACode'])
-
     # Connect to the database
     con = psycopg2.connect(database=POSTGRESQL_DB, user=POSTGRESQL_USER, password=POSTGRESQL_PASSWORD, host=POSTGRESQL_HOST, port=POSTGRESQL_PORT)
     cur = con.cursor()
