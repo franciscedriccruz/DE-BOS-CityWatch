@@ -142,21 +142,6 @@ Population Table Schema
 ### Data Visualization (Plotly, Dash)
 - To demonstrate the functionality of the API on a sample use case, the 311 calls based on type and count are plotted on a bar and choropleth graph to visualize geospatial and temporal geospatial trends. 
 
-#### Bar Graphs Showing 311 Calls per Borough and Call Type Distribution
-<p align="center">
-<img src = "images/5_bar_graphs.gif" width="750" class="center">
-</p>
-
-#### Geospatial 311 Count
-<p align="center">
-<img src = "images/6_geospatial_count.gif" width="750" class="center">
-</p>
-
-#### Geospatial 311 Count per Capita
-<p align="center">
-<img src = "images/7_311perCapita.gif" width="750" class="center">
-</p>
-
 <a name="instructions"></a>
 ## Instructions to Run this Pipeline
 - Install python packages: pandas, geopandas, flask, psycopg2-binary
