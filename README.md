@@ -83,6 +83,16 @@ The ETL pipeline used to analyze this data is shown below. AWS EC2 was used to h
 | ntacode 	| CHAR(4) | 
 |complaint_map	| TEXT 	  |
 
+Population Table Schema
+| Column  	| Type    | 
+| --------------|:-------:| 
+| ntacode     	| CHAR(4)| 
+| population2010| INT 	 | 
+| population2011| INT 	 | 
+| ...           | INT 	 | 
+| population2020| INT 	 | 
+
+
 <a name="API"></a>
 ### API Endpoints (Flask, PostgreSQL)
 - API endpoints were created using Flask to perform SQL queries on PostgreSQL. 
