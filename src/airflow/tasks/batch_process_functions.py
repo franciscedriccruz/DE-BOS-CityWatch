@@ -1,3 +1,7 @@
+'''
+CODE DESCRIPTION: Contains functions and UDFs that are used in batch_process.py. 
+'''
+
 # Import PySpark Libraries
 from __future__ import print_function
 from pyspark.sql import *

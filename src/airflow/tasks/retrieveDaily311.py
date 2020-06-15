@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Retrieve new daily 311 calls and store it into S3 to be used
+for daily batch processing
+'''
+
 # Import libraries to retrieve daily 311 calls
 import datetime as dt
 import pandas as pd

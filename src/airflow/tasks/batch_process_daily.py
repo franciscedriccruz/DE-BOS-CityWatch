@@ -1,3 +1,8 @@
+'''
+CODE DESCRIPTION: Perform data cleaning, mapping 311 calls to NTA codes, and perform aggregated computation based on
+created_date, NTA Code, and borough. The results of the computation are stored into PostgreSQL.  
+'''
+
 # Import Libraries
 from __future__ import print_function
 from pyspark.sql import *
@@ -86,17 +91,14 @@ if __name__ == "__main__":
     NTA_df = timestamp_df.withColumn("ntacode", findNTA_udf(col("longitude"), col("latitude")))
     processed_df = NTA_df.drop(*["longitude", "latitude"])
 
-    # print(processed_df.show())
-
     # Group based on time parameters, NTACode, and complaint type and aggregate counts
     complaint_count_df = processed_df.groupby("created_date", "ntacode", "borough","complaint_type") \
         .agg(F.count("complaint_type").alias("complaint_count")) \
         .select("created_date", "ntacode", "borough", "complaint_type", "complaint_count")
 
-    # # Create a map between the complaint type and its respective count and resolved count
-    map_complaint_count_df = complaint_count_df.groupby("created_date", "ntacode", "borough", "complaint_type", "complaint_count") \
-        .agg(F.create_map("complaint_type", "complaint_count").alias("complaint_map"))  \
-        .select("created_date", "ntacode", "borough", "complaint_map")
+    # Create a map between the cmplaint type and its respective count
+    map_complaint_count_df = complaint_count_df.withColumn("complaint_map", F.create_map("complaint_type", "complaint_count"))\
+        .select("created_date", "borough", "ntacode", "complaint_map")
 
     # Define UDF to combine array of maps into single map in pyspark dataframe
     combineMap = udf(lambda maps: {key:f[key] for f in maps for key in f},
