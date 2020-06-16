@@ -1,4 +1,4 @@
-# CityWatch - Creating Smarter Cities Using the 311
+# City Watch - Creating Smarter Cities Using the 311
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -141,6 +141,26 @@ Population Table Schema
 <a name="datavisualization"></a>
 ### Data Visualization (Plotly, Dash)
 - To demonstrate the functionality of the API on a sample use case, the 311 calls based on type and count are plotted on a bar and choropleth graph to visualize geospatial and temporal geospatial trends. 
+
+#### 311 Calls per Borough 
+<p align="center">
+<img src = "images/5_bar_graph_borough.png" width="700" class="center">
+</p>
+
+#### 311 Calls Type Distribution
+<p align="center">
+<img src = "images/6_bar_graph_type.png" width="700" class="center">
+</p>
+
+#### Geospatial Count of 311 Calls 
+<p align="center">
+<img src = "images/7_geospatial_count.png" width="700" class="center">
+</p>
+
+#### Geospatial Count per Capita of 311 Calls 
+<p align="center">
+<img src = "images/8_geospatial_count_capita.png" width="700" class="center">
+</p>
 
 <a name="instructions"></a>
 ## Instructions to Run this Pipeline
