@@ -157,11 +157,6 @@ Population Table Schema
 <img src = "images/7_geospatial_count.png" width="700" class="center">
 </p>
 
-#### Geospatial Count per Capita of 311 Calls 
-<p align="center">
-<img src = "images/8_geospatial_count_capita.png" width="700" class="center">
-</p>
-
 <a name="instructions"></a>
 ## Instructions to Run this Pipeline
 - Install python packages: pandas, geopandas, flask, psycopg2-binary
